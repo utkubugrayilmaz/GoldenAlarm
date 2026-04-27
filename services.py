@@ -5,11 +5,15 @@ API bağlantısı ve Alarm yönetimi
 
 import json
 import os
+import re
 from datetime import datetime
 from typing import Optional, Dict, List, Any
 
 import requests
 import urllib3
+
+# SSL uyarılarını sustur (🧹 Fix #2)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from config import (
     API_URL,
@@ -21,8 +25,50 @@ from config import (
     BILDIRIM_ESIK
 )
 
-# SSL uyarılarını kapat
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# ============================================================
+#                      YARDIMCI FONKSİYONLAR
+# ============================================================
+
+def parse_turkish_float(value) -> float:
+    """
+    Türk formatındaki sayıyı float'a çevir (🚨 Fix #1)
+    Örnekler:
+        "6.232,12" -> 6232.12
+        "6232.12"  -> 6232.12
+        6232.12    -> 6232.12
+        "6232"     -> 6232.0
+    """
+    if value is None:
+        return 0.0
+
+    # Zaten sayı ise direkt döndür
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    # String ise temizle
+    if isinstance(value, str):
+        value = value.strip()
+
+        if not value:
+            return 0.0
+
+        # Türk formatı kontrolü: "6.232,12" (nokta binlik, virgül ondalık)
+        if "," in value and "." in value:
+            # Noktaları kaldır (binlik ayracı), virgülü noktaya çevir
+            value = value.replace(".", "").replace(",", ".")
+        elif "," in value:
+            # Sadece virgül var, ondalık ayracı olarak kullanılmış
+            value = value.replace(",", ".")
+        # else: Sadece nokta var veya hiç ayraç yok, zaten doğru format
+
+        try:
+            return float(value)
+        except ValueError:
+            # Sayıya çevrilemezse 0 döndür
+            return 0.0
+
+    return 0.0
 
 
 # ============================================================
@@ -30,7 +76,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ============================================================
 
 class GoldAPIService:
-    """Altın fiyatları API servisi"""
+    """Altın fiyatları API servisi - Fallback destekli"""
 
     def __init__(self):
         self.session = requests.Session()
@@ -40,27 +86,105 @@ class GoldAPIService:
             "Accept-Language": "tr-TR,tr;q=0.9",
             "Connection": "keep-alive",
         })
-        self.session.verify = False  # SSL kontrolünü kapat
+        self.session.verify = False
         self.last_data: Optional[Dict] = None
         self.last_update: Optional[datetime] = None
+        self.active_api: str = "truncgil"
 
     def fetch_prices(self) -> Dict[str, Any]:
-        """API'den güncel fiyatları çek"""
+        """API'den güncel fiyatları çek - fallback destekli"""
+
+        # Önce Truncgil dene
+        result = self._fetch_truncgil()
+        if result["success"]:
+            self.active_api = "truncgil"
+            return result
+
+        # Truncgil başarısız, BigPara dene
+        result = self._fetch_bigpara()
+        if result["success"]:
+            self.active_api = "bigpara"
+            return result
+
+        # İkisi de başarısız
+        return {"success": False, "error": "Tüm API'ler başarısız oldu. Lütfen daha sonra tekrar dene."}
+
+    def _fetch_truncgil(self) -> Dict[str, Any]:
+        """Truncgil API'den veri çek"""
         try:
-            response = self.session.get(API_URL, timeout=API_TIMEOUT)
+            response = self.session.get(
+                "https://finans.truncgil.com/v4/today.json",
+                timeout=API_TIMEOUT
+            )
             response.raise_for_status()
 
-            self.last_data = response.json()
+            # JSON parse öncesi kontrol
+            text = response.text
+            if not text.strip().endswith("}"):
+                return {"success": False, "error": "Truncgil: Eksik JSON"}
+
+            data = response.json()
+            self.last_data = self._normalize_truncgil(data)
             self.last_update = datetime.now()
 
             return {"success": True, "data": self.last_data}
 
-        except requests.exceptions.RequestException as e:
-            # Bağlantı hatası olursa session'ı yenile
-            self._reset_session()
-            return {"success": False, "error": f"Bağlantı hatası: {str(e)}"}
-        except ValueError as e:
-            return {"success": False, "error": f"JSON parse hatası: {str(e)}"}
+        except Exception as e:
+            return {"success": False, "error": f"Truncgil: {str(e)}"}
+
+    def _fetch_bigpara(self) -> Dict[str, Any]:
+        """BigPara API'den veri çek (yedek)"""
+        try:
+            response = self.session.get(
+                "https://api.bigpara.hurriyet.com.tr/altin/headerlist/anasayfa",
+                timeout=API_TIMEOUT
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            self.last_data = self._normalize_bigpara(data)
+            self.last_update = datetime.now()
+
+            return {"success": True, "data": self.last_data}
+
+        except Exception as e:
+            return {"success": False, "error": f"BigPara: {str(e)}"}
+
+    def _normalize_truncgil(self, data: Dict) -> Dict:
+        """Truncgil verisini standart formata çevir"""
+        # Zaten doğru formatta, direkt döndür
+        return data
+
+    def _normalize_bigpara(self, data: Dict) -> Dict:
+        """BigPara verisini standart formata çevir"""
+        normalized = {
+            "Update_Date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        # BigPara -> Truncgil format eşleştirmesi
+        mapping = {
+            "ALTIN": "HAS",
+            "CEYREK_YENI": "CEYREKALTIN",
+            "YARIM_YENI": "YARIMALTIN",
+            "TEK_YENI": "TAMALTIN",
+            "CUMHURIYET": "CUMHURIYETALTINI",
+            "ATA_YENI": "ATAALTIN",
+            "RESAT_YENI": "RESATALTIN",
+            "HAMIT_YENI": "HAMITALTIN",
+            "BILEZIK": "YIA",
+        }
+
+        if "data" in data:
+            for item in data["data"]:
+                kod = item.get("kod", "")
+                if kod in mapping:
+                    normalized[mapping[kod]] = {
+                        "Buying": parse_turkish_float(item.get("alis")),
+                        "Selling": parse_turkish_float(item.get("satis")),
+                        "Change": parse_turkish_float(item.get("degisimYuzde"))
+                    }
+
+        return normalized
 
     def _reset_session(self):
         """Session'ı sıfırla"""
@@ -89,12 +213,14 @@ class GoldAPIService:
             carpan = ozel["carpan"]
 
             if kaynak in data:
-                return float(data[kaynak].get("Buying", 0)) * carpan
+                buying = data[kaynak].get("Buying", 0)
+                return parse_turkish_float(buying) * carpan
             return None
 
         # Normal altın
         if urun_kodu in data:
-            return float(data[urun_kodu].get("Buying", 0))
+            buying = data[urun_kodu].get("Buying", 0)
+            return parse_turkish_float(buying)
 
         return None
 
@@ -165,10 +291,10 @@ class AlarmService:
         return max(a["id"] for a in alarms) + 1
 
     def add(
-            self,
-            urun_kodu: str,
-            hedef_fiyat: float,
-            yon: str = "yukari"
+        self,
+        urun_kodu: str,
+        hedef_fiyat: float,
+        yon: str = "yukari"
     ) -> Optional[Dict]:
         """
         Yeni alarm ekle
@@ -250,10 +376,10 @@ class AlarmService:
         return None
 
     def update_trigger_state(
-            self,
-            alarm_id: int,
-            tetiklendi: bool,
-            son_fiyat: float
+        self,
+        alarm_id: int,
+        tetiklendi: bool,
+        son_fiyat: float
     ):
         """Alarm tetiklenme durumunu güncelle"""
         alarms = self._load()
@@ -266,9 +392,9 @@ class AlarmService:
                 return
 
     def check_alarms(
-            self,
-            gold_service: GoldAPIService,
-            data: Dict
+        self,
+        gold_service: GoldAPIService,
+        data: Dict
     ) -> List[Dict]:
         """
         Tüm alarmları kontrol et ve tetiklenenleri döndür
