@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "urun_kodu": "AJDA_10GR",
+    "urun_adi": "10gr Ajda Bilezik",
+    "emoji": "📿",
+    "hedef_fiyat": 65000.0,
+    "yon": "yukari",
+    "aktif": true,
+    "tetiklendi": false,
+    "son_bildirim_fiyat": null,
+    "olusturma_tarihi": "2026-04-28 00:21:10"
+  }
+]
