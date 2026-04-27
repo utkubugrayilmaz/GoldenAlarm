@@ -2,8 +2,8 @@
 GoldenAlarm - Ana Bot Dosyası
 Telegram bot ve zamanlayıcı burada çalışır.
 
-Geliştirici: [Senin Adın]
-GitHub: [GitHub Linkin]
+Geliştirici: utku buğra yılmaz
+GitHub: https://github.com/utkubugrayilmaz
 """
 
 import os
@@ -26,6 +26,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from config import TUM_URUNLER, CHECK_INTERVAL_MINUTES, ALTIN_TURLERI, OZEL_URUNLER
 from services import gold_service, alarm_service
 
+from aiohttp import web
+import asyncio
 # ============================================================
 #                      YAPILANDIRMA
 # ============================================================
@@ -545,6 +547,33 @@ async def check_prices_job(context: ContextTypes.DEFAULT_TYPE):
 #                    ANA FONKSİYON
 # ============================================================
 
+# ============================================================
+#                    WEB SERVER (Render için)
+# ============================================================
+
+async def health_handler(request):
+    """Health check endpoint - UptimeRobot bunu pingleyecek"""
+    return web.Response(text="OK")
+
+
+async def run_webserver():
+    """Basit web server çalıştır"""
+    app = web.Application()
+    app.router.add_get("/", health_handler)
+    app.router.add_get("/health", health_handler)
+
+    port = int(os.getenv("PORT", 8080))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logger.info(f"🌐 Web server başlatıldı (port {port})")
+
+
+# ============================================================
+#                    ANA FONKSİYON
+# ============================================================
+
 def main():
     """Botu başlat"""
 
@@ -586,7 +615,6 @@ def main():
     app.add_handler(CallbackQueryHandler(delete_callback, pattern="^delete_"))
     app.add_handler(alarm_conv_handler)
 
-
     # Scheduler oluştur
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
@@ -599,8 +627,10 @@ def main():
     )
 
     # İlk kontrolü hemen yap
-    async def startup(app):
-        await check_prices_job(app)
+    async def startup(application):
+        await check_prices_job(application)
+        # Web server'ı başlat (Render için)
+        await run_webserver()
 
     app.post_init = startup
 
@@ -615,3 +645,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
