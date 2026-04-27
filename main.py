@@ -11,6 +11,7 @@ import logging
 from datetime import datetime
 
 from dotenv import load_dotenv
+from aiohttp import web
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -21,13 +22,9 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config import TUM_URUNLER, CHECK_INTERVAL_MINUTES, ALTIN_TURLERI, OZEL_URUNLER
 from services import gold_service, alarm_service
-
-from aiohttp import web
-import asyncio
 # ============================================================
 #                      YAPILANDIRMA
 # ============================================================
@@ -574,6 +571,51 @@ async def run_webserver():
 #                    ANA FONKSİYON
 # ============================================================
 
+# ============================================================
+#                    WEB SERVER (Render için)
+# ============================================================
+
+async def health_handler(request):
+    """Health check endpoint"""
+    return web.Response(text="OK")
+
+
+async def run_webserver():
+    """Web server başlat"""
+    app_web = web.Application()
+    app_web.router.add_get("/", health_handler)
+    app_web.router.add_get("/health", health_handler)
+
+    port = int(os.getenv("PORT", 8080))
+    runner = web.AppRunner(app_web)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logger.info(f"🌐 Web server başlatıldı (port {port})")
+
+
+# ============================================================
+#                    ANA FONKSİYON
+# ============================================================
+
+async def post_init(application: Application):
+    """Bot başladıktan sonra çalışır"""
+    # Web server'ı başlat
+    await run_webserver()
+
+    # İlk fiyat kontrolünü yap
+    await check_prices_job(application)
+
+    # Job Queue ile zamanlı görev ekle
+    application.job_queue.run_repeating(
+        check_prices_job,
+        interval=CHECK_INTERVAL_MINUTES * 60,  # saniye cinsinden
+        first=CHECK_INTERVAL_MINUTES * 60,
+        name="price_check"
+    )
+    logger.info(f"⏰ Zamanlayıcı başlatıldı ({CHECK_INTERVAL_MINUTES} dakika aralıkla)")
+
+
 def main():
     """Botu başlat"""
 
@@ -615,28 +657,8 @@ def main():
     app.add_handler(CallbackQueryHandler(delete_callback, pattern="^delete_"))
     app.add_handler(alarm_conv_handler)
 
-    # Scheduler oluştur
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(
-        check_prices_job,
-        "interval",
-        minutes=CHECK_INTERVAL_MINUTES,
-        args=[app],
-        id="price_check",
-        replace_existing=True
-    )
-
-    # İlk kontrolü hemen yap
-    async def startup(application):
-        await check_prices_job(application)
-        # Web server'ı başlat (Render için)
-        await run_webserver()
-
-    app.post_init = startup
-
-    # Scheduler'ı başlat
-    scheduler.start()
-    logger.info(f"⏰ Zamanlayıcı başlatıldı ({CHECK_INTERVAL_MINUTES} dakika aralıkla)")
+    # Post init ayarla
+    app.post_init = post_init
 
     # Botu çalıştır
     logger.info("✅ Bot çalışıyor!")
@@ -645,5 +667,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
