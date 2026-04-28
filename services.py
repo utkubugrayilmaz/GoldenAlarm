@@ -12,7 +12,7 @@ from typing import Optional, Dict, List, Any
 import requests
 import urllib3
 
-# SSL uyarılarını sustur (🧹 Fix #2)
+# SSL uyarılarını sustur (Fix #2)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from config import (
@@ -32,7 +32,7 @@ from config import (
 
 def parse_turkish_float(value) -> float:
     """
-    Türk formatındaki sayıyı float'a çevir (🚨 Fix #1)
+    Türk formatındaki sayıyı float'a çevir (Fix #1)
     Örnekler:
         "6.232,12" -> 6232.12
         "6232.12"  -> 6232.12
@@ -239,7 +239,6 @@ class GoldAPIService:
             if fiyat is not None:
                 prices[kod] = {
                     "ad": bilgi["ad"],
-                    "emoji": bilgi["emoji"],
                     "fiyat": fiyat
                 }
 
@@ -317,7 +316,6 @@ class AlarmService:
             "id": self._generate_id(alarms),
             "urun_kodu": urun_kodu,
             "urun_adi": urun["ad"],
-            "emoji": urun["emoji"],
             "hedef_fiyat": hedef_fiyat,
             "yon": yon,
             "aktif": True,

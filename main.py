@@ -77,23 +77,23 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Kullanıcıyı karşıla ve menüyü göster
     """
     welcome_text = """
-🥇 <b>GoldenAlarm'a Hoş Geldin!</b>
+<b>GoldenAlarm'a Hoş Geldin!</b>
 
 Altın fiyatlarını takip et, alarm kur, fırsatları kaçırma.
 
-<b>📋 Komutlar:</b>
+<b>Komutlar:</b>
 /fiyat - Güncel altın fiyatları
 /alarm - Yeni alarm kur
 /alarmlar - Alarmlarını gör
 /sil - Alarm sil
 /yardim - Yardım
 
-<b>⚙️ Sistem:</b>
+<b>Sistem:</b>
 • Fiyatlar 5 dakikada bir kontrol edilir
 • Hedefe ulaşınca bildirim gelir
 • Fiyat değişmeye devam ederse takip bildirimi alırsın
 
-💡 Hemen /alarm yazarak başla!
+Hemen /alarm yazarak başla!
 """
     await update.message.reply_text(welcome_text, parse_mode="HTML")
 
@@ -101,23 +101,23 @@ Altın fiyatlarını takip et, alarm kur, fırsatları kaçırma.
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """/yardim komutu"""
     help_text = """
-📖 <b>Nasıl Kullanılır?</b>
+<b>Nasıl Kullanılır?</b>
 
-<b>1️⃣ Fiyat Öğrenme:</b>
+<b>Fiyat Öğrenme:</b>
 /fiyat yazınca tüm güncel fiyatları görürsün.
 
-<b>2️⃣ Alarm Kurma:</b>
-/alarm yaz → Altın seç → Hedef fiyat gir → Yön seç (↑ veya ↓)
+<b>Alarm Kurma:</b>
+/alarm yaz → Altın seç → Hedef fiyat gir → Yön seç (Yukarı veya Aşağı)
 
-<b>3️⃣ Alarm Yönetimi:</b>
+<b>Alarm Yönetimi:</b>
 /alarmlar - Tüm alarmları listele
 /sil - Alarm sil
 
-<b>📈 Yön Ne Demek?</b>
-• <b>Yukarı (↑):</b> Fiyat X'e çıkınca haber ver
-• <b>Aşağı (↓):</b> Fiyat X'e düşünce haber ver
+<b>Yön Ne Demek?</b>
+• <b>Yukarı:</b> Fiyat X'e çıkınca haber ver
+• <b>Aşağı:</b> Fiyat X'e düşünce haber ver
 
-<b>🔔 Takip Bildirimi:</b>
+<b>Takip Bildirimi:</b>
 Alarm tetiklendikten sonra fiyat her 1.000₺ değişimde tekrar bildirim alırsın.
 """
     await update.message.reply_text(help_text, parse_mode="HTML")
@@ -128,33 +128,33 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /fiyat komutu
     Güncel altın fiyatlarını göster
     """
-    await update.message.reply_text("🔄 Fiyatlar alınıyor...")
+    await update.message.reply_text("Fiyatlar alınıyor...")
 
     result = gold_service.fetch_prices()
 
     if not result["success"]:
-        await update.message.reply_text(f"❌ Hata: {result['error']}")
+        await update.message.reply_text(f"Hata: {result['error']}")
         return
 
     data = result["data"]
     update_time = gold_service.get_update_time(data)
 
-    text = f"📊 <b>GÜNCEL ALTIN FİYATLARI</b>\n"
-    text += f"🕐 <i>{update_time}</i>\n\n"
+    text = f"<b>GÜNCEL ALTIN FİYATLARI</b>\n"
+    text += f"<i>{update_time}</i>\n\n"
 
     # Altınlar
-    text += "🪙 <b>Altınlar</b>\n"
+    text += "<b>Altınlar</b>\n"
     for kod, bilgi in ALTIN_TURLERI.items():
         fiyat = gold_service.get_price(kod, data)
         if fiyat:
-            text += f"  {bilgi['emoji']} {bilgi['ad']}: <b>{format_price(fiyat)} ₺</b>\n"
+            text += f"  {bilgi['ad']}: <b>{format_price(fiyat)} ₺</b>\n"
 
     # Özel ürünler (Ajda)
-    text += "\n📿 <b>Bilezikler</b>\n"
+    text += "\n<b>Bilezikler</b>\n"
     for kod, bilgi in OZEL_URUNLER.items():
         fiyat = gold_service.get_price(kod, data)
         if fiyat:
-            text += f"  {bilgi['emoji']} {bilgi['ad']}: <b>{format_price(fiyat)} ₺</b>\n"
+            text += f"  {bilgi['ad']}: <b>{format_price(fiyat)} ₺</b>\n"
 
     await update.message.reply_text(text, parse_mode="HTML")
 
@@ -173,39 +173,39 @@ async def alarm_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Ajda bileziği en üstte
     keyboard.append([
-        InlineKeyboardButton("📿 10gr Ajda", callback_data="gold_AJDA_10GR"),
-        InlineKeyboardButton("📿 5gr Ajda", callback_data="gold_AJDA_5GR"),
+        InlineKeyboardButton("10gr Ajda", callback_data="gold_AJDA_10GR"),
+        InlineKeyboardButton("5gr Ajda", callback_data="gold_AJDA_5GR"),
     ])
     keyboard.append([
-        InlineKeyboardButton("📿 15gr Ajda", callback_data="gold_AJDA_15GR"),
-        InlineKeyboardButton("📿 20gr Ajda", callback_data="gold_AJDA_20GR"),
+        InlineKeyboardButton("15gr Ajda", callback_data="gold_AJDA_15GR"),
+        InlineKeyboardButton("20gr Ajda", callback_data="gold_AJDA_20GR"),
     ])
 
     # Diğer altınlar
     keyboard.append([
-        InlineKeyboardButton("🥇 Gram Altın", callback_data="gold_HAS"),
-        InlineKeyboardButton("📿 22 Ayar", callback_data="gold_YIA"),
+        InlineKeyboardButton("Gram Altın", callback_data="gold_HAS"),
+        InlineKeyboardButton("22 Ayar", callback_data="gold_YIA"),
     ])
     keyboard.append([
-        InlineKeyboardButton("🪙 Çeyrek", callback_data="gold_CEYREKALTIN"),
-        InlineKeyboardButton("🪙 Yarım", callback_data="gold_YARIMALTIN"),
+        InlineKeyboardButton("Çeyrek", callback_data="gold_CEYREKALTIN"),
+        InlineKeyboardButton("Yarım", callback_data="gold_YARIMALTIN"),
     ])
     keyboard.append([
-        InlineKeyboardButton("🪙 Tam", callback_data="gold_TAMALTIN"),
-        InlineKeyboardButton("🏅 Cumhuriyet", callback_data="gold_CUMHURIYETALTINI"),
+        InlineKeyboardButton("Tam", callback_data="gold_TAMALTIN"),
+        InlineKeyboardButton("Cumhuriyet", callback_data="gold_CUMHURIYETALTINI"),
     ])
     keyboard.append([
-        InlineKeyboardButton("🏅 Ata", callback_data="gold_ATAALTIN"),
-        InlineKeyboardButton("🏅 Reşat", callback_data="gold_RESATALTIN"),
+        InlineKeyboardButton("Ata", callback_data="gold_ATAALTIN"),
+        InlineKeyboardButton("Reşat", callback_data="gold_RESATALTIN"),
     ])
     keyboard.append([
-        InlineKeyboardButton("❌ İptal", callback_data="cancel"),
+        InlineKeyboardButton("İptal", callback_data="cancel"),
     ])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        "🪙 <b>Hangi altın için alarm kurmak istiyorsun?</b>",
+        "<b>Hangi altın için alarm kurmak istiyorsun?</b>",
         reply_markup=reply_markup,
         parse_mode="HTML"
     )
@@ -219,7 +219,7 @@ async def gold_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     if query.data == "cancel":
-        await query.edit_message_text("❌ Alarm kurma iptal edildi.")
+        await query.edit_message_text("Alarm kurma iptal edildi.")
         return ConversationHandler.END
 
     # Seçilen altını kaydet
@@ -235,12 +235,12 @@ async def gold_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     gold_name = TUM_URUNLER[gold_code]["ad"]
 
-    text = f"📍 <b>{gold_name}</b> seçildi.\n\n"
+    text = f"<b>{gold_name}</b> seçildi.\n\n"
 
     if current_price:
-        text += f"💰 Güncel fiyat: <b>{format_price(current_price)} ₺</b>\n\n"
+        text += f"Güncel fiyat: <b>{format_price(current_price)} ₺</b>\n\n"
 
-    text += "🎯 <b>Hedef fiyatı yaz:</b>\n"
+    text += "<b>Hedef fiyatı yaz:</b>\n"
     text += "<i>(Örnek: 62000 veya 62.000)</i>"
 
     await query.edit_message_text(text, parse_mode="HTML")
@@ -263,7 +263,7 @@ async def price_entered(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except ValueError:
         await update.message.reply_text(
-            "❌ Geçersiz fiyat. Lütfen sadece sayı gir.\n"
+            "Geçersiz fiyat. Lütfen sadece sayı gir.\n"
             "<i>Örnek: 62000 veya 62.000</i>",
             parse_mode="HTML"
         )
@@ -274,13 +274,13 @@ async def price_entered(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Yön seçimi
     keyboard = [
         [
-            InlineKeyboardButton("📈 Yukarı (fiyat yükselince)", callback_data="dir_yukari"),
+            InlineKeyboardButton("Yukarı (fiyat yükselince)", callback_data="dir_yukari"),
         ],
         [
-            InlineKeyboardButton("📉 Aşağı (fiyat düşünce)", callback_data="dir_asagi"),
+            InlineKeyboardButton("Aşağı (fiyat düşünce)", callback_data="dir_asagi"),
         ],
         [
-            InlineKeyboardButton("❌ İptal", callback_data="cancel"),
+            InlineKeyboardButton("İptal", callback_data="cancel"),
         ],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -289,9 +289,9 @@ async def price_entered(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gold_name = TUM_URUNLER[gold_code]["ad"]
 
     await update.message.reply_text(
-        f"📍 {gold_name}\n"
-        f"🎯 Hedef: <b>{format_price(target_price)} ₺</b>\n\n"
-        f"📊 <b>Ne zaman haber vereyim?</b>",
+        f"{gold_name}\n"
+        f"Hedef: <b>{format_price(target_price)} ₺</b>\n\n"
+        f"<b>Ne zaman haber vereyim?</b>",
         reply_markup=reply_markup,
         parse_mode="HTML"
     )
@@ -305,7 +305,7 @@ async def direction_selected(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await query.answer()
 
     if query.data == "cancel":
-        await query.edit_message_text("❌ Alarm kurma iptal edildi.")
+        await query.edit_message_text("Alarm kurma iptal edildi.")
         context.user_data.clear()
         return ConversationHandler.END
 
@@ -317,21 +317,21 @@ async def direction_selected(update: Update, context: ContextTypes.DEFAULT_TYPE)
     alarm = alarm_service.add(gold_code, target_price, direction)
 
     if alarm:
-        direction_text = "📈 Yukarı (yükselince)" if direction == "yukari" else "📉 Aşağı (düşünce)"
+        direction_text = "Yukarı (yükselince)" if direction == "yukari" else "Aşağı (düşünce)"
 
         text = f"""
-✅ <b>ALARM KURULDU!</b>
+ALARM KURULDU!
 
-{alarm['emoji']} <b>{alarm['urun_adi']}</b>
-🎯 Hedef: <b>{format_price(target_price)} ₺</b>
-📊 Yön: {direction_text}
+<b>{alarm['urun_adi']}</b>
+Hedef: <b>{format_price(target_price)} ₺</b>
+Yön: {direction_text}
 
-🔔 Hedefe ulaşınca bildirim alacaksın.
-📱 Sonrasında her 1.000₺ değişimde takip bildirimi gelecek.
+Hedefe ulaşınca bildirim alacaksın.
+Sonrasında her 1.000₺ değişimde takip bildirimi gelecek.
 """
         await query.edit_message_text(text, parse_mode="HTML")
     else:
-        await query.edit_message_text("❌ Alarm eklenirken bir hata oluştu.")
+        await query.edit_message_text("Alarm eklenirken bir hata oluştu.")
 
     context.user_data.clear()
     return ConversationHandler.END
@@ -342,9 +342,9 @@ async def cancel_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE
     context.user_data.clear()
 
     if update.callback_query:
-        await update.callback_query.edit_message_text("❌ İşlem iptal edildi.")
+        await update.callback_query.edit_message_text("İşlem iptal edildi.")
     else:
-        await update.message.reply_text("❌ İşlem iptal edildi.")
+        await update.message.reply_text("İşlem iptal edildi.")
 
     return ConversationHandler.END
 
@@ -359,23 +359,23 @@ async def list_alarms_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     if not alarms:
         await update.message.reply_text(
-            "📭 Henüz kurulu alarm yok.\n\n"
-            "💡 /alarm yazarak yeni alarm kurabilirsin."
+            "Henüz kurulu alarm yok.\n\n"
+            "/alarm yazarak yeni alarm kurabilirsin."
         )
         return
 
-    text = "🔔 <b>ALARMLARIM</b>\n\n"
+    text = "<b>ALARMLARIM</b>\n\n"
 
     for alarm in alarms:
-        status = "✅" if alarm["aktif"] else "⏸️"
-        triggered = "🔔" if alarm["tetiklendi"] else "⏳"
-        direction = "📈" if alarm["yon"] == "yukari" else "📉"
+        status = "[Aktif]" if alarm["aktif"] else "[Pasif]"
+        triggered = "[Tetiklendi]" if alarm["tetiklendi"] else "[Bekliyor]"
+        direction = "[Yukari]" if alarm["yon"] == "yukari" else "[Asagi]"
 
-        text += f"{status} <b>#{alarm['id']}</b> {alarm['emoji']} {alarm['urun_adi']}\n"
+        text += f"{status} <b>#{alarm['id']}</b> {alarm['urun_adi']}\n"
         text += f"    {direction} Hedef: <b>{format_price(alarm['hedef_fiyat'])} ₺</b>\n"
         text += f"    {triggered} {'Tetiklendi' if alarm['tetiklendi'] else 'Bekliyor'}\n\n"
 
-    text += "💡 Silmek için /sil"
+    text += "Silmek için /sil"
 
     await update.message.reply_text(text, parse_mode="HTML")
 
@@ -385,24 +385,24 @@ async def delete_alarm_command(update: Update, context: ContextTypes.DEFAULT_TYP
     alarms = alarm_service.get_all()
 
     if not alarms:
-        await update.message.reply_text("📭 Silinecek alarm yok.")
+        await update.message.reply_text("Silinecek alarm yok.")
         return
 
     keyboard = []
 
     for alarm in alarms:
-        direction = "↑" if alarm["yon"] == "yukari" else "↓"
-        btn_text = f"#{alarm['id']} {alarm['emoji']} {alarm['urun_adi']} {direction} {format_price(alarm['hedef_fiyat'])}₺"
+        direction = "Yukarı" if alarm["yon"] == "yukari" else "Aşağı"
+        btn_text = f"#{alarm['id']} {alarm['urun_adi']} {direction} {format_price(alarm['hedef_fiyat'])}₺"
         keyboard.append([
             InlineKeyboardButton(btn_text, callback_data=f"delete_{alarm['id']}")
         ])
 
-    keyboard.append([InlineKeyboardButton("❌ İptal", callback_data="delete_cancel")])
+    keyboard.append([InlineKeyboardButton("İptal", callback_data="delete_cancel")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        "🗑️ <b>Hangi alarmı silmek istiyorsun?</b>",
+        "<b>Hangi alarmı silmek istiyorsun?</b>",
         reply_markup=reply_markup,
         parse_mode="HTML"
     )
@@ -414,7 +414,7 @@ async def delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     if query.data == "delete_cancel":
-        await query.edit_message_text("❌ Silme iptal edildi.")
+        await query.edit_message_text("Silme iptal edildi.")
         return
 
     alarm_id = int(query.data.replace("delete_", ""))
@@ -422,13 +422,13 @@ async def delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if alarm and alarm_service.delete(alarm_id):
         await query.edit_message_text(
-            f"🗑️ <b>Alarm silindi!</b>\n\n"
-            f"{alarm['emoji']} {alarm['urun_adi']}\n"
-            f"🎯 Hedef: {format_price(alarm['hedef_fiyat'])} ₺",
+            f"Alarm silindi!\n\n"
+            f"{alarm['urun_adi']}\n"
+            f"Hedef: {format_price(alarm['hedef_fiyat'])} ₺",
             parse_mode="HTML"
         )
     else:
-        await query.edit_message_text("❌ Alarm silinemedi.")
+        await query.edit_message_text("Alarm silinemedi.")
 
 
 #test
@@ -441,12 +441,12 @@ async def test_alarm_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     if not alarms:
         await update.message.reply_text(
-            "⚠️ Test için önce bir alarm kur.\n"
+            "Test için önce bir alarm kur.\n"
             "/alarm yazarak alarm kurabilirsin."
         )
         return
 
-    await update.message.reply_text("🧪 <b>TEST MODU</b>\n\nAlarmlar simüle ediliyor...", parse_mode="HTML")
+    await update.message.reply_text("<b>TEST MODU</b>\n\nAlarmlar simüle ediliyor...", parse_mode="HTML")
 
     # Her alarm için sahte tetikleme bildirimi gönder
     for alarm in alarms:
@@ -456,24 +456,22 @@ async def test_alarm_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # Sahte fiyat (hedefin biraz üstünde/altında)
         if alarm["yon"] == "yukari":
             fake_price = alarm["hedef_fiyat"] + 500
-            yon_emoji = "📈"
         else:
             fake_price = alarm["hedef_fiyat"] - 500
-            yon_emoji = "📉"
 
         text = f"""
-🧪 <b>TEST - ALARM TETİKLENDİ!</b>
+TEST - ALARM TETİKLENDİ!
 
-{yon_emoji} {alarm['emoji']} <b>{alarm['urun_adi']}</b>
+<b>{alarm['urun_adi']}</b>
 
-🎯 Hedef: {format_price(alarm['hedef_fiyat'])} ₺
-💰 Test Fiyat: <b>{format_price(fake_price)} ₺</b>
+Hedef: {format_price(alarm['hedef_fiyat'])} ₺
+Test Fiyat: <b>{format_price(fake_price)} ₺</b>
 
-⚠️ <i>Bu bir test bildirimidir.</i>
+<i>Bu bir test bildirimidir.</i>
 """
         await update.message.reply_text(text, parse_mode="HTML")
 
-    await update.message.reply_text("✅ Test tamamlandı!\n\n<i>Gerçek alarmlar fiyat değişimlerinde tetiklenecek.</i>",
+    await update.message.reply_text("Test tamamlandı!\n\n<i>Gerçek alarmlar fiyat değişimlerinde tetiklenecek.</i>",
                                     parse_mode="HTML")
 
 
@@ -485,7 +483,7 @@ async def check_prices_job(context: ContextTypes.DEFAULT_TYPE):
     """
     Her 5 dakikada bir çalışan fiyat kontrol görevi
     """
-    logger.info("⏰ Fiyat kontrolü başladı...")
+    logger.info("Fiyat kontrolü başladı...")
 
     result = gold_service.fetch_prices()
 
@@ -504,67 +502,39 @@ async def check_prices_job(context: ContextTypes.DEFAULT_TYPE):
 
         if notif["type"] == "trigger":
             # İlk tetikleme
-            yon_emoji = "📈" if alarm["yon"] == "yukari" else "📉"
 
             text = f"""
-🔔 <b>ALARM TETİKLENDİ!</b>
+ALARM TETİKLENDİ!
 
-{yon_emoji} {alarm['emoji']} <b>{alarm['urun_adi']}</b>
+<b>{alarm['urun_adi']}</b>
 
-🎯 Hedef: {format_price(alarm['hedef_fiyat'])} ₺
-💰 Güncel: <b>{format_price(guncel_fiyat)} ₺</b>
+Hedef: {format_price(alarm['hedef_fiyat'])} ₺
+Güncel: <b>{format_price(guncel_fiyat)} ₺</b>
 
-⏰ {datetime.now().strftime("%d.%m.%Y %H:%M")}
+{datetime.now().strftime("%d.%m.%Y %H:%M")}
 """
         else:
             # Takip bildirimi
             fark = notif["fark"]
-            yon_emoji = "🚀" if alarm["yon"] == "yukari" else "📉"
             durum = "yükselmeye devam ediyor" if fark > 0 else "düşmeye devam ediyor"
 
             text = f"""
-{yon_emoji} <b>TAKİP BİLDİRİMİ</b>
+TAKİP BİLDİRİMİ
 
-{alarm['emoji']} <b>{alarm['urun_adi']}</b> {durum}!
+<b>{alarm['urun_adi']}</b> {durum}!
 
-🎯 Hedefin: {format_price(alarm['hedef_fiyat'])} ₺
-💰 Şu an: <b>{format_price(guncel_fiyat)} ₺</b>
-📊 Değişim: {format_price(abs(fark))} ₺ {'artış' if fark > 0 else 'düşüş'}
+Hedefin: {format_price(alarm['hedef_fiyat'])} ₺
+Şu an: <b>{format_price(guncel_fiyat)} ₺</b>
+Değişim: {format_price(abs(fark))} ₺ {'artış' if fark > 0 else 'düşüş'}
 
-⏰ {datetime.now().strftime("%d.%m.%Y %H:%M")}
+{datetime.now().strftime("%d.%m.%Y %H:%M")}
 """
 
         await send_notification(context, text)
-        logger.info(f"🔔 Bildirim gönderildi: {alarm['urun_adi']}")
+        logger.info(f"Bildirim gönderildi: {alarm['urun_adi']}")
 
-    logger.info(f"✅ Fiyat kontrolü tamamlandı. {len(notifications)} bildirim gönderildi.")
+    logger.info(f"Fiyat kontrolü tamamlandı. {len(notifications)} bildirim gönderildi.")
 
-
-# ============================================================
-#                    ANA FONKSİYON
-# ============================================================
-
-# ============================================================
-#                    WEB SERVER (Render için)
-# ============================================================
-
-async def health_handler(request):
-    """Health check endpoint - UptimeRobot bunu pingleyecek"""
-    return web.Response(text="OK")
-
-
-async def run_webserver():
-    """Basit web server çalıştır"""
-    app = web.Application()
-    app.router.add_get("/", health_handler)
-    app.router.add_get("/health", health_handler)
-
-    port = int(os.getenv("PORT", 8080))
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
-    logger.info(f"🌐 Web server başlatıldı (port {port})")
 
 
 # ============================================================
@@ -591,7 +561,7 @@ async def run_webserver():
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
-    logger.info(f"🌐 Web server başlatıldı (port {port})")
+    logger.info(f"Web server başlatıldı (port {port})")
 
 
 # ============================================================
@@ -613,21 +583,21 @@ async def post_init(application: Application):
         first=CHECK_INTERVAL_MINUTES * 60,
         name="price_check"
     )
-    logger.info(f"⏰ Zamanlayıcı başlatıldı ({CHECK_INTERVAL_MINUTES} dakika aralıkla)")
+    logger.info(f"Zamanlayıcı başlatıldı ({CHECK_INTERVAL_MINUTES} dakika aralıkla)")
 
 
 def main():
     """Botu başlat"""
 
     if not TELEGRAM_TOKEN:
-        logger.error("❌ TELEGRAM_TOKEN bulunamadı!")
+        logger.error("TELEGRAM_TOKEN bulunamadı!")
         return
 
     if not TELEGRAM_CHAT_ID:
-        logger.error("❌ TELEGRAM_CHAT_ID bulunamadı!")
+        logger.error("TELEGRAM_CHAT_ID bulunamadı!")
         return
 
-    logger.info("🚀 GoldenAlarm başlatılıyor...")
+    logger.info("GoldenAlarm başlatılıyor...")
 
     # Application oluştur
     app = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -661,10 +631,9 @@ def main():
     app.post_init = post_init
 
     # Botu çalıştır
-    logger.info("✅ Bot çalışıyor!")
+    logger.info("Bot çalışıyor!")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
     main()
-

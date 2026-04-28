@@ -20,47 +20,38 @@ ALARMS_FILE = "alarms.json"
 ALTIN_TURLERI = {
     "HAS": {
         "ad": "Gram Has Altın",
-        "emoji": "🥇",
         "birim": "gram"
     },
     "YIA": {
         "ad": "22 Ayar Bilezik",
-        "emoji": "📿",
         "birim": "gram"
     },
     "CEYREKALTIN": {
         "ad": "Çeyrek Altın",
-        "emoji": "🪙",
         "birim": "adet"
     },
     "YARIMALTIN": {
         "ad": "Yarım Altın",
-        "emoji": "🪙",
         "birim": "adet"
     },
     "TAMALTIN": {
         "ad": "Tam Altın",
-        "emoji": "🪙",
         "birim": "adet"
     },
     "CUMHURIYETALTINI": {
         "ad": "Cumhuriyet Altını",
-        "emoji": "🏅",
         "birim": "adet"
     },
     "ATAALTIN": {
         "ad": "Ata Altın",
-        "emoji": "🏅",
         "birim": "adet"
     },
     "RESATALTIN": {
         "ad": "Reşat Altın",
-        "emoji": "🏅",
         "birim": "adet"
     },
     "HAMITALTIN": {
         "ad": "Hamit Altın",
-        "emoji": "🏅",
         "birim": "adet"
     },
 }
@@ -70,25 +61,21 @@ ALTIN_TURLERI = {
 OZEL_URUNLER = {
     "AJDA_5GR": {
         "ad": "5gr Ajda Bilezik",
-        "emoji": "📿",
         "kaynak": "YIA",
         "carpan": 5
     },
     "AJDA_10GR": {
         "ad": "10gr Ajda Bilezik",
-        "emoji": "📿",
         "kaynak": "YIA",
         "carpan": 10
     },
     "AJDA_15GR": {
         "ad": "15gr Ajda Bilezik",
-        "emoji": "📿",
         "kaynak": "YIA",
         "carpan": 15
     },
     "AJDA_20GR": {
         "ad": "20gr Ajda Bilezik",
-        "emoji": "📿",
         "kaynak": "YIA",
         "carpan": 20
     },
