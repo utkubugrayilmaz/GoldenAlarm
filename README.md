@@ -28,7 +28,7 @@ A Telegram bot application that allows you to instantly track gold prices and se
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/KULLANICI_ADIN/GoldenAlarm.git
+git clone https://github.com/User_Name/GoldenAlarm.git
 cd GoldenAlarm
 ```
 
